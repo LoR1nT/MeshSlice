@@ -26,6 +26,7 @@ public class GameController : MonoBehaviour
     private void Start()
     {
         _katanaPosition = _katana.transform.position;
+        _boxPosition = _box.transform.position;
         _boxRigidbody = _box.GetComponent<Rigidbody>();
     }
 
@@ -81,38 +82,27 @@ public class GameController : MonoBehaviour
         if (!_slicingProgres && _slicingFinish)
         {
             _boxRigidbody.isKinematic = false;
-            _boxPosition = _box.transform.position;
             _boxRigidbody.velocity = _box.transform.right * 0.1f;
-            //Vector3 direction = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
-            //_box.transform.Translate(direction * Time.deltaTime);
             return;
         }
 
         _boxRigidbody.isKinematic = true;
 
+        Invoke("ChangeRadius", 0.1f);
+
+    }
+
+    private void ChangeRadius()
+    {
+        float widthOfSlice = ((_box.transform.position.x + 0.5f) - (_boxPosition.x + 0.5f)) * 1000;
 
 
-        //float widthOfSlice;
+        float radius = 1f - ((widthOfSlice * 0.08f) / 100f);
 
-
-
-        //if (_box.transform.position.x < 0)
-        //{
-        //    widthOfSlice = Mathf.Abs(_boxPosition.x * 1000) - Mathf.Abs(_box.transform.position.x * 1000);
-        //}
-        //else if (_box.transform.position.x > 0)
-        //{
-        //    widthOfSlice = Mathf.Abs(_boxPosition.x * 1000) - Mathf.Abs(_box.transform.position.x * 1000) + 500;
-        //}
-        //else
-        //    widthOfSlice = 500f;
-
-        //float radius = 1f - ((widthOfSlice * 0.08f) / 100f);
-
-        //foreach (var material in _materials)
-        //{
-        //    material.SetFloat("_Radius", radius);
-        //}
+        foreach (var material in _materials)
+        {
+            material.SetFloat("_Radius", radius);
+        }
 
     }
 
@@ -124,14 +114,7 @@ public class GameController : MonoBehaviour
 
         if (posY > 1)
         {
-            if(_sliced != null)
-            {
-                _sliced.GetComponent<Rigidbody>().isKinematic = false;
-                _sliced.GetComponent<Rigidbody>().useGravity = true;
-            }
-            _pointY = 0.5f;
-            _slicingProgres = false;
-            Invoke("DestroySlice", 1f);
+            FinishSclicing();
         }
         else
         {
@@ -139,9 +122,9 @@ public class GameController : MonoBehaviour
             _slicingFinish = false;
         }
 
-        if (posY <= 0)
+        if (posY <= 0.1f)
         {
-            _slicingFinish = true;
+            _slicingFinish = true;            
         }
 
         if (Input.GetAxis("Vertical") > 0)
@@ -154,6 +137,11 @@ public class GameController : MonoBehaviour
             return;
         }
 
+        Cutting();
+    }
+
+    private void Cutting()
+    {
         float pointY = 10;
 
         if (_sliced != null)
@@ -168,7 +156,19 @@ public class GameController : MonoBehaviour
         {
             material.SetFloat("_PointY", _pointY);
         }
+    }
 
+    private void FinishSclicing()
+    {
+        if (_sliced != null)
+        {
+            _sliced.GetComponent<Rigidbody>().isKinematic = false;
+            _sliced.GetComponent<Rigidbody>().useGravity = true;
+        }
+        _pointY = 0.5f;
+        _slicingProgres = false;
+        _boxPosition = _box.transform.position;
+        Invoke("DestroySlice", 1f);
     }
 
     private void DestroySlice()
